@@ -1,9 +1,5 @@
 pipeline {
     agent any
-    environment {
-        DOKCER_IMAGE = 'shudhoo/sampleapp'
-        DOCKER_TAG = 'latest'
-    }
     stages {
         stage('Validate Stage') {
             steps {
@@ -51,21 +47,15 @@ pipeline {
                 sh '/opt/maven/bin/mvn package'
             }
         }
-        stage ('Build Docker Image') {
+
+        stage ('Build-Push Docker Image') {
             steps {
-                sh 'docker build -t ${DOKCER_IMAGE}:${DOCKER_TAG} .'
-            }
-        }
-        stage ('Push Docker Image') {
-            steps {
-                script {
-            withDockerRegistry(credentialsId: 'dockerhub-creds', url: 'https://index.docker.io/v1/') {
-                def img = docker.image("${DOKCER_IMAGE}:${DOCKER_TAG}")
-                img.push()
-            }
+            withDockerRegistry(credentialsId: 'dockerhub-creds', url: 'https://index.docker.io/v1/') 
+              sh '''cd $WORKSPACE 
+                    docker build --file Dockerfile --tag shudhoo/sampleapp:$BUILD_NUMBER
+                    docker push shudhoo/sampleapp:$BUILD_NUMBER'''
                 }
         }
         }
     }
-}
 
